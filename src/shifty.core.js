@@ -7,6 +7,18 @@ var Tweenable = (function () {
 
   'use strict';
 
+  var nextId = 1;
+  var schedulingActivated = false;
+  var activeTweenables = { };
+
+  function animateTweens() {
+    for (var id in activeTweenables) {
+      activeTweenables[id]._timeoutHandler();
+    }
+    requestAnimationFrame(animateTweens);
+  }
+  animateTweens();
+
   // Aliases that get defined later in this function
   var formula;
 
@@ -202,8 +214,8 @@ var Tweenable = (function () {
         step(targetState, tweenable._attachment, timeoutHandler_offset);
         tweenable.stop(true);
       } else {
-        tweenable._scheduleId =
-          schedule(tweenable._timeoutHandler, UPDATE_TIME);
+        // tweenable._scheduleId =
+        //   schedule(tweenable._timeoutHandler, UPDATE_TIME);
 
         applyFilter(tweenable, 'beforeTween');
 
@@ -269,6 +281,7 @@ var Tweenable = (function () {
     this._currentState = opt_initialState || {};
     this._configured = false;
     this._scheduleFunction = DEFAULT_SCHEDULE_FUNCTION;
+    this._id = 'id' + nextId++;
 
     // To prevent unnecessary calls to setConfig do not set default
     // configuration here.  Only set default configuration immediately before
@@ -425,6 +438,7 @@ var Tweenable = (function () {
     this._isPaused = false;
     this._isTweening = true;
 
+    activeTweenables[this._id] = this;
     this._timeoutHandler();
 
     return this;
@@ -487,6 +501,7 @@ var Tweenable = (function () {
     this._isTweening = false;
     this._isPaused = false;
     this._timeoutHandler = noop;
+    delete activeTweenables[this._id];
 
     (root.cancelAnimationFrame            ||
     root.webkitCancelAnimationFrame     ||
